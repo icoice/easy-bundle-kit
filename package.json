@@ -1,0 +1,26 @@
+{
+  "name": "easy-bundle-kit",
+  "version": "0.0.1",
+  "description": "webpack easy",
+  "main": "index.js",
+  "scripts": {
+    "debug-cmd": "set DEBUG=* & node index.js --webpack --entry ./examples --language typescript",
+    "debug-shell": "DEBUG='*' & node index.js --webpack --entry ./examples --language typescript",
+    "debug-powershell": "@powershell -Command $env:DEBUG='*'; node index.js --webpack --entry ./examples --language typescript",
+    "test:short": "@powershell -Command $env:DEBUG='*'; node index.js --webpack -e ./examples -l typescript"
+  },
+  "keywords": [
+    "webpack"
+  ],
+  "author": "icoice",
+  "license": "MIT",
+  "devDependencies": {
+    "cli": "^1.0.1"
+  },
+  "dependencies": {
+    "debug": "^4.3.4"
+  },
+  "directories": {
+    "example": "examples"
+  }
+}
