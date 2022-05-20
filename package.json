@@ -1,13 +1,16 @@
 {
   "name": "easy-bundle-kit",
-  "version": "0.0.2",
-  "description": "webpack easy",
+  "version": "0.0.3",
+  "description": "easy webpack develop",
   "main": "index.js",
   "scripts": {
     "debug-cmd": "set DEBUG=* & node index.js --webpack --entry ./examples --language typescript",
     "debug-shell": "DEBUG='*' & node index.js --webpack --entry ./examples --language typescript",
     "debug-powershell": "@powershell -Command $env:DEBUG='*'; node index.js --webpack --entry ./examples --language typescript",
-    "test:short": "@powershell -Command $env:DEBUG='*'; node index.js --webpack -e ./examples -l typescript ecmascript"
+    "test:all": "@powershell -Command $env:DEBUG='*'; node index.js --webpack -e ./examples -l typescript ecmascript pug",
+    "test:ts": "@powershell -Command $env:DEBUG='*'; node index.js --webpack --entry ./examples --language typescript",
+    "test:pug": "@powershell -Command $env:DEBUG='*'; node index.js -w -e ./examples -l pug",
+    "test:es": "@powershell -Command $env:DEBUG='*'; node index.js -w -e ./examples -l ecmascript"
   },
   "keywords": [
     "webpack"

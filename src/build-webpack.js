@@ -16,6 +16,17 @@ const WEBPACK_COMMON_PLUGINS = [
     },
 ];
 
+const WEBPACK_PUG_CONF = () => ({
+    dependence: ['pug-loader'],
+    config: {
+        test: /\.m?pug$/,
+        exclude: DEF_EXCLUDE_PATH,
+        use: [
+            { loader: 'pug-loader' }
+        ]
+    },
+});
+
 const WEBPACK_BABEL_CONF = (dependence = [], presets = [], plugins = []) => ({
     dependence: ['babel-loader', ...dependence],
     config: {
@@ -48,7 +59,7 @@ const WEBPACK_ES = WEBPACK_BABEL_CONF(
     ],
 );
 
- // typescript
+// typescript
 const WEBPACK_TS = WEBPACK_BABEL_CONF(
     // dependence
     ['@babel/preset-typescript'],
@@ -56,11 +67,13 @@ const WEBPACK_TS = WEBPACK_BABEL_CONF(
     ['@babel/preset-typescript'],
 );
 
+// typescript
+const WEBPACK_PUG = WEBPACK_PUG_CONF();
+
 WEBPACK_DEFAULT_CONFIG.mode = 'development';
 WEBPACK_DEFAULT_CONFIG.entry = '';
 WEBPACK_DEFAULT_CONFIG.output = {};
 WEBPACK_DEFAULT_CONFIG.plugins = '${plugins}';
-
 WEBPACK_COMMON_PLUGINS.map(module => {
     const splitGroup = module.name.split('-');
     const variableName = splitGroup.map(n => `${n[0].toUpperCase()}${n.slice(1, n.length)}`).join('');
@@ -82,6 +95,7 @@ module.exports = {
     WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS,
     WEBPACK_CODE_PLUGINS_SETTING,
     WEBPACK_COMMON_PLUGINS,
+    WEBPACK_PUG,
     WEBPACK_ES,
     WEBPACK_TS,
     wsBuildConfig(options, { entryPath, outputPath }, commandMap) {
@@ -100,6 +114,10 @@ module.exports = {
         if (options.language) {
             WEBPACK_DEFAULT_CONFIG.module = {};
             WEBPACK_DEFAULT_CONFIG.module.rules = [];
+        }
+
+        if (commandMap.language.includes('pug')) {
+            WEBPACK_DEFAULT_CONFIG.module.rules.push(WEBPACK_PUG.config);
         }
     
         if (commandMap.language.includes('ecmascript'))  {
