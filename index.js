@@ -173,7 +173,7 @@ const runNpmInstall = async (dependence = [], options = {}, dev = '') => {
         npm.stderr.on('data', data => {
             warnCount += 1;
 
-            warnning(warnCount);
+            warnning(`Warn count ${warnCount}`);
             warnContents.push(data);
         });
 
@@ -197,7 +197,7 @@ const buildWebpack = (options, { entryPath, outputPath }, commandMap) => {
     WEBPACK_DEFAULT_CONFIG.entry = entryPath;
     WEBPACK_DEFAULT_CONFIG.output = {
         filename: !options.bundle ? bundleFileName : options.bundle,
-        path: entryPath === outputPath ? `${outputPath}/dist` : outputPath,
+        path: entryPath === outputPath ? path.resolve(outputPath, './dist') : outputPath,
         ...(options.systemjs ? { libraryTarget: 'system' } : {}),
     };
 
