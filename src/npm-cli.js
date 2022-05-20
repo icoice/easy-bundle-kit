@@ -2,7 +2,7 @@ const { spawn } = require('child_process');
 const debug = require('debug')('easy-bundel-kit:npm');
 const warnning = debug.extend('warnning');
 
-export const init = async (options = {}) => { 
+const init = async (options = {}) => { 
     debug(`Init npm environment`);
 
     return new Promise(resolve => {
@@ -20,8 +20,7 @@ export const init = async (options = {}) => {
     });
 };
 
-
-export const install = async (dependence = [], options = {}, dev = '') => {
+const install = async (dependence = [], options = {}, dev = '') => {
     return new Promise(resolve => {
         debug('npm install dependencies');
         
@@ -50,7 +49,7 @@ export const install = async (dependence = [], options = {}, dev = '') => {
     });
 }
 
-export default {
+module.exports = {
     init,
     install,
 };

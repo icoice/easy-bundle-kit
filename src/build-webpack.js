@@ -1,3 +1,4 @@
+const path = require('path');
 const debug = require('debug')('easy-bundel-kit:webpack');
 const util = require('util');
 
@@ -59,6 +60,21 @@ WEBPACK_DEFAULT_CONFIG.mode = 'development';
 WEBPACK_DEFAULT_CONFIG.entry = '';
 WEBPACK_DEFAULT_CONFIG.output = {};
 WEBPACK_DEFAULT_CONFIG.plugins = '${plugins}';
+
+WEBPACK_COMMON_PLUGINS.map(module => {
+    const splitGroup = module.name.split('-');
+    const variableName = splitGroup.map(n => `${n[0].toUpperCase()}${n.slice(1, n.length)}`).join('');
+
+    return { variableName, moduleName: module.name, destruct: module.destruct };
+}).map(({ variableName, moduleName, destruct }) => {
+    if (destruct) {
+        WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS.push(`const { ${variableName} } = require('${moduleName}');`);
+    } else {
+        WEBPACK_CODE_PLUGINS_IMPORTS.push(`const ${variableName} = require('${moduleName}');`);
+    }
+
+    WEBPACK_CODE_PLUGINS_SETTING.push(`new ${variableName}()`);
+});
 
 module.exports = {
     WEBPACK_DEPENDENCE,

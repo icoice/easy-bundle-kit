@@ -1,6 +1,6 @@
 {
   "name": "easy-bundle-kit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "webpack easy",
   "main": "index.js",
   "scripts": {

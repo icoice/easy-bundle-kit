@@ -1,86 +1,48 @@
 #!/usr/bin/env node
+const path = require('path');
+const fs = require('fs');
 const debug = require('debug')('easy-bundel-kit');
 const cli = require('cli');
-const npmCli = require('./npm-cli');
-const { getCommandMap } = require('./tools');
+const npmCli = require('./src/npm-cli');
+
+const {
+    getCommandMap,
+    entryName,
+    shortNames,
+    tips,
+} = require('./src/common');
+
 const {
     WEBPACK_DEPENDENCE,
-    WEBPACK_CODE_PLUGINS_IMPORTS,
-    WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS,
-    WEBPACK_CODE_PLUGINS_SETTING,
     WEBPACK_COMMON_PLUGINS,
     WEBPACK_ES,
     WEBPACK_TS,
     wsBuildConfig,
-} = request('./build-webpack');
+} = require('./src/build-webpack');
 
 const error = debug.extend('error');
-const { path, fs } = cli.native;
-const absPath = link => path.resolve(__dirname, link);
-const entryName = 'main';
-const tips = {
-    order_webpack_explain: '生成Webpack默认配置',
-    order_language_explain:  '设置开发语言',
-    order_output_explain: '设置配置/打包文件导出路径',
-    order_entry_expalin: `设置入口文件名称, 默认名称为${entryName}`,
-    order_bundle_explain: '设置打包文件名称',
-    order_systemjs_explain: '设置开启支持systemjs',
-    error_entry_not_found: '目录下未发现入口文件，请创建main.(js|ts|jsx)文件',
-    error_choose_your_bundle_kit: '未指定打包器',
-};
+const rs = link => path.resolve(__dirname, link);
 
-const shortNames = {
-    webpack: 'w',
-    language: 'l',
-    output: 'o',
-    entry: 'e',
-    bundle: 'b',
-    bundlePath: 'p',
-    systemjs: 's',
-};
-
-const shortNameTurn = {};
-
-Object.entries(shortNames).forEach(([full, short]) => {
-    shortNameTurn[short] = full;
-});
-
-const commander = {
+// easy-bundle-kit -w -> print to cli.command
+// easy-bundle-kit --webpack -> print to cli.command
+// single page use: easy-bunlde-kit --webpack --output ./ --language typescript postcss pug scss
+// multiple page use: easy-bundle-kit --webpack --multiple-page
+cli.parse({
     webpack: [shortNames.webpack, tips.order_webpack_explain],
     language: [shortNames.language, tips.order_language_explain],
     output: [shortNames.output, tips.order_output_explain],
     entry: [shortNames.entry, tips.order_entry_expalin],
     bundle: [shortNames.bundle, tips.order_bundle_explain],
     systemjs: [shortNames.systemjs, tips.order_systemjs_explain],
-};
-
-WEBPACK_COMMON_PLUGINS.map(module => {
-    const splitGroup = module.name.split('-');
-    const variableName = splitGroup.map(n => `${n[0].toUpperCase()}${n.slice(1, n.length)}`).join('');
-
-    return { variableName, moduleName: module.name, destruct: module.destruct };
-}).map(({ variableName, moduleName, destruct }) => {
-    if (destruct) {
-        WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS.push(`const { ${variableName} } = require('${moduleName}');`);
-    } else {
-        WEBPACK_CODE_PLUGINS_IMPORTS.push(`const ${variableName} = require('${moduleName}');`);
-    }
-
-    WEBPACK_CODE_PLUGINS_SETTING.push(`new ${variableName}()`);
 });
 
-// easy-bundle-kit -w -> print to cli.command
-// easy-bundle-kit --webpack -> print to cli.command
-// single page use: easy-bunlde-kit --webpack --output ./ --language typescript postcss pug scss
-// multiple page use: easy-bundle-kit --webpack --multiple-page
-cli.parse(commander);
 cli.main(async function () {
     debug('Bundle kit standby');
 
     const { options } = this;
     const commandMap = getCommandMap();
-    const entryPath = !options.entry ? absPath('./') : absPath(commandMap.entry[0]); // 确认配置文件入口路径
-    const outputPath = !options.output ? entryPath : absPath(commandMap.output[0]); // 确认配置文件输出路径
+    const entryPath = !options.entry ? rs('./') : rs(commandMap.entry[0]); // 确认配置文件入口路径
+    const outputPath = !options.output ? entryPath : rs(commandMap.output[0]); // 确认配置文件输出路径
     const directory = fs.readdirSync(entryPath);
 
     debug(`检查入口文件: ${entryPath}`);
