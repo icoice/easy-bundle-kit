@@ -34,7 +34,7 @@ const install = async (dependence = [], options = {}, dev = '') => {
         npm.stderr.on('data', data => {
             warnCount += 1;
 
-            warnning(`Warn count ${warnCount}`);
+            warnning(`Install warn count ${warnCount}`);
             warnContents.push(data);
         });
 
@@ -49,7 +49,34 @@ const install = async (dependence = [], options = {}, dev = '') => {
     });
 }
 
+const script = async (scripts = {}, options = {}) => {
+    return new Promise(resolve => {
+        debug('npm set script');
+
+        console.log(['set-script'].concat(Object.entries(scripts).map(([scriptName, command]) => `${scriptName} "${command}"`)));
+
+        const npmCliName = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+        const npm = spawn(npmCliName ? 'npm.cmd' : 'npm',
+            ['set-script'].concat(Object.entries(scripts).map(([scriptName, command]) => `${scriptName} "${command}"`)),
+            options);
+
+        npm.stderr.on('data', data => {
+            warnning(`${data}`);
+        });
+
+        npm.stdout.on('data', () => {
+            Object.entries(scripts).map(([scriptName]) => debug(`set ${scriptName}`));
+        });
+
+        npm.stdout.on('close', () => {
+            debug('Set complete');
+            resolve();
+        });
+    });
+};
+
 module.exports = {
     init,
     install,
+    script,
 };

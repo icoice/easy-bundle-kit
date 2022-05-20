@@ -1,14 +1,15 @@
 #!/usr/bin/env node
-const path = require('path');
-const fs = require('fs');
 const debug = require('debug')('easy-bundel-kit');
+const path = require('path');
 const cli = require('cli');
+const fs = require('fs');
 const npmCli = require('./src/npm-cli');
 const {
     getCommandMap,
-    entryName,
-    shortNames,
-    tips,
+    DEF_ENTRY_FILE_NAME,
+    COMMANDS,
+    TIPS,
+    rs,
 } = require('./src/common');
 const {
     WEBPACK_DEPENDENCE,
@@ -18,22 +19,14 @@ const {
     WEBPACK_TS,
     wsBuildConfig,
 } = require('./src/build-webpack');
+
 const error = debug.extend('error');
-const rs = link => path.resolve(__dirname, link);
 
 // easy-bundle-kit -w -> print to cli.command
 // easy-bundle-kit --webpack -> print to cli.command
 // single page use: easy-bunlde-kit --webpack --output ./ --language typescript postcss pug scss
 // multiple page use: easy-bundle-kit --webpack --multiple-page
-cli.parse({
-    webpack: [shortNames.webpack, tips.order_webpack_explain],
-    language: [shortNames.language, tips.order_language_explain],
-    output: [shortNames.output, tips.order_output_explain],
-    entry: [shortNames.entry, tips.order_entry_expalin],
-    bundle: [shortNames.bundle, tips.order_bundle_explain],
-    systemjs: [shortNames.systemjs, tips.order_systemjs_explain],
-});
-
+cli.parse(COMMANDS);
 cli.main(async function () {
     debug('Bundle kit standby');
 
@@ -47,15 +40,15 @@ cli.main(async function () {
     debug(`确认导出路径: ${outputPath}`);
 
     if (!directory || directory.length <= 0) {
-        return error(tips.error_entry_not_found);
+        return error(TIPS.error_entry_not_found);
     }
 
-    const findEntryFile = directory.filter(filename => filename.indexOf(entryName) >= 0);
+    const findEntryFile = directory.filter(filename => filename.includes(DEF_ENTRY_FILE_NAME));
 
     debug(`发现入口文件：${findEntryFile.length > 0 ? findEntryFile.join('、') : 'Not Found'}`);
 
     if (findEntryFile.length <= 0) {
-        return error(tips.error_entry_not_found);
+        return error(TIPS.error_entry_not_found);
     }
 
     /* webpack */
@@ -64,7 +57,7 @@ cli.main(async function () {
         const config = wsBuildConfig(options, { entryPath, outputPath }, commandMap);
 
         if (!config) {
-            return error(tips.error_choose_your_bundle_kit);
+            return error(TIPS.error_choose_your_bundle_kit);
         }
     
         fs.createWriteStream(path.resolve(`${outputPath}/webpack.config.js`))
@@ -73,11 +66,22 @@ cli.main(async function () {
         // init develop env
         await npmCli.init({ cwd: entryPath });
 
+        // script
+        await npmCli.script({
+            start: 'npm run rush',
+        });
+
+        await npmCli.script({
+            serve: 'npx serve --debug --no-etag -C -p 7500',
+        });
+
+        // basic
         await npmCli.install(Array.from(new Set([
             ...WEBPACK_DEPENDENCE,
             ...WEBPACK_COMMON_PLUGINS.map(module => module.name)])),
             { cwd: entryPath }, 'dev');
-
+        
+        // language
         await npmCli.install(Array.from(new Set([]
             .concat(commandMap.language.includes('pug') ? WEBPACK_PUG.dependence : [])
             .concat(commandMap.language.includes('ecmascript') ? WEBPACK_ES.dependence : [])

@@ -3,7 +3,8 @@
 用于快速生成对应的前端开发环境。
 
 ##### Install
-
+    
+    npm install --global npx
     npm install --save-dev easy-bunlde-kit
 
 ##### Command

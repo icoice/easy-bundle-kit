@@ -1,8 +1,8 @@
 const path = require('path');
 const debug = require('debug')('easy-bundel-kit:webpack');
 const util = require('util');
+const { DEF_BUNDLE_FILE_NAME } = require('./common');
 
-const bundleFileName = 'bundle.js';
 const DEF_EXCLUDE_PATH = /dist|node_modules/;
 const WEBPACK_DEFAULT_CONFIG = {};
 const WEBPACK_DEPENDENCE = ['webpack', 'webpack-cli'];
@@ -106,7 +106,7 @@ module.exports = {
     
         WEBPACK_DEFAULT_CONFIG.entry = entryPath;
         WEBPACK_DEFAULT_CONFIG.output = {
-            filename: !options.bundle ? bundleFileName : options.bundle,
+            filename: !options.bundle ? DEF_BUNDLE_FILE_NAME : options.bundle,
             path: entryPath === outputPath ? path.resolve(outputPath, './dist') : outputPath,
             ...(options.systemjs ? { libraryTarget: 'system' } : {}),
         };
