@@ -7,7 +7,7 @@
     "debug-cmd": "set DEBUG=* & node index.js --webpack --entry ./examples --language typescript",
     "debug-shell": "DEBUG='*' & node index.js --webpack --entry ./examples --language typescript",
     "debug-powershell": "@powershell -Command $env:DEBUG='*'; node index.js --webpack --entry ./examples --language typescript",
-    "test:short": "@powershell -Command $env:DEBUG='*'; node index.js --webpack -e ./examples -l typescript"
+    "test:short": "@powershell -Command $env:DEBUG='*'; node index.js --webpack -e ./examples -l typescript ecmascript"
   },
   "keywords": [
     "webpack"
@@ -22,5 +22,13 @@
   },
   "directories": {
     "example": "examples"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/icoice/easy-bundle-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/icoice/easy-bundle-kit/issues"
+  },
+  "homepage": "https://github.com/icoice/easy-bundle-kit#readme"
 }
