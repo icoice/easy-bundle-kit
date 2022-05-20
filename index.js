@@ -1,73 +1,23 @@
 #!/usr/bin/env node
 const debug = require('debug')('easy-bundel-kit');
 const cli = require('cli');
-const util = require('util');
-const process = require('process');
-const { spawn } = require('child_process');
+const npmCli = require('./npm-cli');
+const { getCommandMap } = require('./tools');
+const {
+    WEBPACK_DEPENDENCE,
+    WEBPACK_CODE_PLUGINS_IMPORTS,
+    WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS,
+    WEBPACK_CODE_PLUGINS_SETTING,
+    WEBPACK_COMMON_PLUGINS,
+    WEBPACK_ES,
+    WEBPACK_TS,
+    wsBuildConfig,
+} = request('./build-webpack');
+
 const error = debug.extend('error');
-const warnning = debug.extend('warnning');
 const { path, fs } = cli.native;
 const absPath = link => path.resolve(__dirname, link);
-const WEBPACK_DEFAULT_CONFIG = {};
-const WEBPACK_DEPENDENCE = ['webpack', 'webpack-cli'];
-const WEBPACK_CODE_PLUGINS_IMPORTS = [];
-const WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS = [];
-const WEBPACK_CODE_PLUGINS_SETTING = [];
-const DEF_EXCLUDE_PATH = /dist|node_modules/;
-const WEBPACK_COMMON_PLUGINS = [
-    {
-        name: 'clean-webpack-plugin',
-        destruct: true,
-    },
-];
-
-const WEBPACK_BABEL_CONF = (dependence = [], presets = [], plugins = []) => ({
-    dependence: ['babel-loader', ...dependence],
-    config: {
-        test: /\.m?js$/,
-        exclude: DEF_EXCLUDE_PATH,
-        use: {
-            loader: 'babel-loader',
-            options: {
-                presets: [...presets],
-                plugins: [...plugins],
-            },
-        },
-    },
-});
-
-// ecmascript
-const WEBPACK_ES = WEBPACK_BABEL_CONF(
-    // dependence
-    [
-        '@babel/preset-env',
-        '@babel/plugin-transform-runtime',
-    ],
-    // presets
-    [
-        ['@babel/preset-env', { targets: "defaults" }], // 默认es2015至es2020所有语法都编译成过渡用法
-    ],
-    // plugins
-    [
-        '@babel/plugin-transform-runtime'
-    ],
-);
-
- // typescript
-const WEBPACK_TS = WEBPACK_BABEL_CONF(
-    // dependence
-    ['@babel/preset-typescript'],
-    // presets
-    ['@babel/preset-typescript'],
-);
-
-WEBPACK_DEFAULT_CONFIG.mode = 'development';
-WEBPACK_DEFAULT_CONFIG.entry = '';
-WEBPACK_DEFAULT_CONFIG.output = {};
-WEBPACK_DEFAULT_CONFIG.plugins = '${plugins}';
-
 const entryName = 'main';
-const bundleFileName = 'bundle.js';
 const tips = {
     order_webpack_explain: '生成Webpack默认配置',
     order_language_explain:  '设置开发语言',
@@ -119,114 +69,6 @@ WEBPACK_COMMON_PLUGINS.map(module => {
     WEBPACK_CODE_PLUGINS_SETTING.push(`new ${variableName}()`);
 });
 
-const getCommandMap = () => {
-    const processCommand = process.argv.slice(2, process.argv.length);
-    const commandMap = {};
-    let command = '';
-
-    processCommand.map(params => {
-        // 校验是否为指令
-        if (/^-|--/.test(params)) {
-            const processName = params.replace(/^--/, '').replace(/^-/, '');
-            const commandName = shortNameTurn[processName] || processName;
-
-            if (command !== commandName) command = commandName;
-            if (!commandMap[commandName]) commandMap[commandName] = [];
-        // 获取指令后的参数
-        } else {
-            commandMap[command].push(params);
-        }
-    });
-
-    return commandMap;
-}
-
-const runNpmInit = async (options = {}) => { 
-    debug(`Init npm environment`);
-
-    return new Promise(resolve => {
-        const npmCliName = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-        const npm = spawn(npmCliName, ['init', '--yes'], options);
-    
-        npm.stdout.on('data', () => {
-            debug(`Init now`);
-        });
-    
-        npm.stdout.on('close', () => {
-            debug('Init complete');
-            resolve();
-        });
-    });
-};
-
-const runNpmInstall = async (dependence = [], options = {}, dev = '') => {
-    return new Promise(resolve => {
-        debug('npm install dependencies');
-        
-        const npmCliName = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-        const npm = spawn(npmCliName ? 'npm.cmd' : 'npm',
-            ['install', `--save${dev !== '' ? '-' + dev : ''}`].concat(dependence),
-            options);
-        let warnCount = 0;
-        let warnContents = [];
-
-        npm.stderr.on('data', data => {
-            warnCount += 1;
-
-            warnning(`Warn count ${warnCount}`);
-            warnContents.push(data);
-        });
-
-        npm.stdout.on('data', () => {
-            dependence.map(module => debug(`install ${module}`));
-        });
-
-        npm.stdout.on('close', () => {
-            debug('Install complete');
-            resolve();
-        });
-    });
-}
-
-const buildWebpack = (options, { entryPath, outputPath }, commandMap) => {
-    let config = 'None content, check your command.';
-
-    debug('选择打包配置：Webpack');
-    debug(`选择入口文件：${entryPath}`);
-
-    WEBPACK_DEFAULT_CONFIG.entry = entryPath;
-    WEBPACK_DEFAULT_CONFIG.output = {
-        filename: !options.bundle ? bundleFileName : options.bundle,
-        path: entryPath === outputPath ? path.resolve(outputPath, './dist') : outputPath,
-        ...(options.systemjs ? { libraryTarget: 'system' } : {}),
-    };
-
-    if (options.language) {
-        WEBPACK_DEFAULT_CONFIG.module = {};
-        WEBPACK_DEFAULT_CONFIG.module.rules = [];
-    }
-
-    if (commandMap.language.includes('ecmascript'))  {
-        WEBPACK_DEFAULT_CONFIG.module.rules.push(WEBPACK_ES.config);
-    }
-
-    if (commandMap.language.includes('typescript'))  {
-        WEBPACK_DEFAULT_CONFIG.module.rules.push(WEBPACK_TS.config);
-    }
-
-    config = util.inspect(WEBPACK_DEFAULT_CONFIG, {
-        compact: false,
-        depth: Infinity,
-        breakLength: 80,
-    });
-
-    return  `${WEBPACK_CODE_PLUGINS_DESTRUCT_IMPORTS.join('')}
-${WEBPACK_CODE_PLUGINS_IMPORTS.join('')}
-
-module.exports = ${config.replace('\'${plugins}\'', `[${WEBPACK_CODE_PLUGINS_SETTING.join(',')}]`)};
-`;
-};
-
 // easy-bundle-kit -w -> print to cli.command
 // easy-bundle-kit --webpack -> print to cli.command
 // single page use: easy-bunlde-kit --webpack --output ./ --language typescript postcss pug scss
@@ -254,21 +96,21 @@ cli.main(async function () {
 
     // WEBPACK - 单入口打包
     if (options.webpack) {
-        const config = buildWebpack(options, { entryPath, outputPath }, commandMap);
+        const config = wsBuildConfig(options, { entryPath, outputPath }, commandMap);
 
         if (!config) return error(tips.error_choose_your_bundle_kit);
     
         fs.createWriteStream(path.resolve(`${outputPath}/webpack.config.js`)).write(config);
 
         // 初始化开发环境
-        await runNpmInit({ cwd: entryPath });
+        await npmCli.init({ cwd: entryPath });
 
-        await runNpmInstall(Array.from(new Set([
+        await npmCli.install(Array.from(new Set([
             ...WEBPACK_DEPENDENCE,
             ...WEBPACK_COMMON_PLUGINS.map(module => module.name)])),
             { cwd: entryPath }, 'dev');
 
-        await runNpmInstall(Array.from(new Set([]
+        await npmCli.install(Array.from(new Set([]
             .concat(commandMap.language.includes('ecmascript') ? WEBPACK_ES.dependence : [])
             .concat(commandMap.language.includes('typescript') ? WEBPACK_TS.dependence : []))),
             { cwd: entryPath }, 'dev');
