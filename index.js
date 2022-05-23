@@ -36,8 +36,8 @@ cli.main(async function () {
     const outputPath = !options.output ? entryPath : rs(commandMap.output[0]); // 确认配置文件输出路径
     const directory = fs.readdirSync(entryPath);
 
-    debug(`检查入口文件: ${entryPath}`);
-    debug(`确认导出路径: ${outputPath}`);
+    debug(`设置入口: ${entryPath}`);
+    debug(`导出路径: ${outputPath}`);
 
     if (!directory || directory.length <= 0) {
         return error(TIPS.error_entry_not_found);
@@ -45,7 +45,7 @@ cli.main(async function () {
 
     const findEntryFile = directory.filter(filename => filename.includes(DEF_ENTRY_FILE_NAME));
 
-    debug(`发现入口文件：${findEntryFile.length > 0 ? findEntryFile.join('、') : 'Not Found'}`);
+    debug(`入口文件：${findEntryFile.length > 0 ? findEntryFile.join('、') : 'Not Found'}`);
 
     if (findEntryFile.length <= 0) {
         return error(TIPS.error_entry_not_found);
@@ -68,12 +68,8 @@ cli.main(async function () {
 
         // script
         await npmCli.script({
-            start: 'npm run rush',
-        });
-
-        await npmCli.script({
-            serve: 'npx serve --debug --no-etag -C -p 7500',
-        });
+            build: 'npx webpack',
+        }, { cwd: entryPath });
 
         // basic
         await npmCli.install(Array.from(new Set([

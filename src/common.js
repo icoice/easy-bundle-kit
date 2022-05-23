@@ -39,8 +39,6 @@ Object.entries(SHORT_NAMES).forEach(([full, short]) => {
     shortNameTurn[short] = full;
 });
 
-console.log(process.cwd());
-
 const rs = link => path.resolve(process.cwd(), link);
 
 module.exports = {
